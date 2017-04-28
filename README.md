@@ -18,3 +18,8 @@ CrediblePlot2D[ data2D, nbins]
 LogLogCrediblePlot2D[ data2D, nbins]
 - here data1D must be a 2xN list of samples: {{x1,y1,prob1},{x2,y2,prob2},...,{xN,yN,probN}}
 - nbins is the number of bins in the x and y direction
+
+## Things to add
+- different binspec in different dimensions
+- retransform log plots (right now the axes are just relabled, this breaks some option functionality)
+- smart auto bin choice

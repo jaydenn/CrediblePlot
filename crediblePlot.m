@@ -10,15 +10,29 @@ LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob}
 
 
 CrediblePlot1D[data_, nbins_] := 
-Module[{plot, minx, maxx, xbin, binData}, 
+Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2}, 
 minx = Min[data[[All,1]]]; 
 maxx = Max[data[[All,1]]]; 
 xbin = (maxx - minx)/nbins; 
 
-binData = Table[{i, Plus @@ Select[data, i - xbin/2 < #1[[1]] < i + xbin/2 & ][[All,2]]}, {i, minx - xbin/2, maxx + xbin/2, xbin}]; 
-plot = ListPlot[binData, Joined -> True, PlotRange -> All]; 
+binData = Table[{i+xbin/2, Plus @@ Select[data, i <= #1[[1]] < i + xbin & ][[All,2]]}, {i, minx, maxx-xbin/2, xbin}]; 
+plot = ListPlot[binData, InterpolationOrder -> 0, Joined -> True, PlotRange -> {0, 1.1 binData[[All,2]]//Max}, Frame -> True]; 
 
-Return[plot]; 
+binSorted = Sort[binData, #1[[2]] > #2[[2]] &];
+
+sum=0; 
+n=1; 
+While[ sum < .68, sum += binSorted[[ n, 2]]; n++ ];
+cl1=binSorted[[n,2]];
+
+While[ sum < .95 && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
+cl2=binSorted[[n,2]];
+
+confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }]; 
+    confLimits2 = ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }]; 
+
+
+Return[Show[plot,confLimits1,confLimits2]]; 
 ]; 
 
 
@@ -39,7 +53,7 @@ Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, yda
     confLimits1 = ListPlot[(#1*UnitStep[#1 - cl[[1]]] & )[binData], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
     confLimits2 = ListPlot[(#1*UnitStep[#1 - cl[[2]]] & )[binData], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
 
-Show[plot, confLimits1, confLimits2, options]
+Return[Show[plot, confLimits1, confLimits2, options]];
 ];
 
 
@@ -74,5 +88,6 @@ plot = ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, Interpol
 Show[plot, FrameTicks -> ftlog, options]
 ];
 
+Print["Welcome to crediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D and LogLogCrediblePlot2D. See the github page or readme for more details."];
 
 EndPackage[]
