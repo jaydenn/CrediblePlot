@@ -56,8 +56,10 @@ Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, yda
 Return[Show[plot, confLimits1, confLimits2, options]];
 ];
 
-CrediblePlot2D[data_, nbins_] := 
-Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ft}, 
+CredPlot2D//Clear;
+Options[CredPlot2D] = {CredibleLevel -> {0.6827,0.9545}, Smoothing->False};
+CredPlot2D[data_, nbins_, OptionsPattern[{CredPlot2D,ListContourPlot}]] := 
+Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft}, 
 minx = Min[data[[All,1]]]; 
 maxx = Max[data[[All,1]]]; 
 miny = Min[data[[All,2]]]; 
@@ -71,21 +73,17 @@ ft = {{Join[Table[{i, Superscript[10, i]}, {i, Ceiling[miny] - 1, Floor[maxy] + 
 binData=(((Plus @@ # &) /@ #)[[All, 3]] &) /@ (Flatten[#, 1] & /@ 
    BinLists[data, {minx, maxx, xbin}, {miny, maxy, ybin}, {0, 1, 1}]);
 
-smoothedData = (ArrayPad[#1, 1, 0] & )[ImageData[(GaussianFilter[#1, {1, 1}] & )[Image[binData]]]]; 
-     cl = Quiet[p /. {FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.95, {p, 0, 1}], FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.68, {p, 0, 1}]}]; 
-     ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, 
+If[OptionValue[Smoothing]==True, binData = (ArrayPad[#1, 1, 0] & )[ImageData[(GaussianFilter[#1, {1, 1}] & )[Image[binData]]]];];
+
+cl = ( p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 0, 1}] &) /@ OptionValue[CredibleLevel])//Quiet;
+
+Return[ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, 
       PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}]];
 
-(*
-CrediblePlot2D[data_, nbins_] := Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ft}, minx = Min[data[[All,1]]]; maxx = Max[data[[All,1]]]; miny = Min[data[[All,2]]]; maxy = Max[data[[All,2]]]; 
-     xbin = (maxx - minx)/nbins; ybin = (maxy - miny)/nbins; ft = {{Join[Table[{i, Superscript[10, i]}, {i, Ceiling[miny] - 1, Floor[maxy] + 1}], Table[{j + 0.5, Null}, {j, Round[miny] - 1, Round[maxy] + 1, 1}]], None}, 
-       {Join[Table[{i, Superscript[10, i]}, {i, Ceiling[minx] - 1, Floor[maxx] + 1}], Table[{j + 0.5, Null}, {j, Round[minx] - 1, Round[maxx] + 1, 1}]], None}}; 
-     binData = (ArrayPad[#1, 1, 0] & )[ImageData[(GaussianFilter[#1, {1, 1}] & )[Image[Table[ydata = Select[data, j - ybin/2 < #1[[2]] < j + ybin/2 & ]; 
-            Table[Plus @@ Select[ydata, i - xbin/2 < #1[[1]] < i + xbin/2 & ][[All,3]], {i, minx - xbin/2, maxx + xbin/2, xbin}], {j, miny - ybin/2, maxy + ybin/2, ybin}]]]]]; 
-     cl = Quiet[p /. {FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.95, {p, 0, 1}], FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.68, {p, 0, 1}]}]; 
-     ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, 
-      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}]];
-*)
+];
+CrediblePlot2D//Clear;
+CrediblePlot2D[data_, nbins_, options___] := CredPlot2D[data, nbins, options];
+
 
 LogLogCrediblePlot2D[data_, nbins_, options___] := Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, logData, ftlog, plot}, 
 logData = data; 
