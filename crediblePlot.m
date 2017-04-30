@@ -3,38 +3,48 @@
 BeginPackage["crediblePlot`"]
 
 
-CrediblePlot1D::usage="CrediblePlot1D[2xN list of samples {x,prob} , number of bins]"
+CrediblePlot1D::usage="CrediblePlot1D[2xN list of samples: {x,prob} , number of bins, options]"
 LogCrediblePlot1D::usage="LogCrediblePlot1D[2xN list of samples {x,prob} , number of bins]"
 CrediblePlot2D::usage="CrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
 LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
 
+CrediblePlot1D//Clear;
+CrediblePlot1D[data_, nbins_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545},ListPlot}]] := 
 
-CrediblePlot1D[data_, nbins_,options__] := 
-Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2}, 
-minx = Min[data[[All,1]]]; 
-maxx = Max[data[[All,1]]]; 
-xbin = (maxx - minx)/nbins; 
+Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2},
+ 
+    minx = Min[data[[All,1]]]; 
+    maxx = Max[data[[All,1]]]; 
+    xbin = (maxx - minx)/nbins; 
 
-binData = {Table[i+xbin/2, {i, minx, maxx-xbin/2, xbin}], (Plus @@ #[[All, 2]]) & /@ (BinLists[data, {minx,maxx,xbin}, {0, 1, 1}][[All, 1]])}//Thread   ; 
-plot = ListPlot[binData, InterpolationOrder -> 0, Joined -> True, PlotRange -> {0, 1.1 binData[[All,2]]//Max}, Frame -> True, DataRange -> {minx , maxx },options]; 
+    binData = {Table[i+xbin/2, {i, minx, maxx-xbin/2, xbin}], (Plus @@ #[[All, 2]]) & /@ (BinLists[data, {minx,maxx,xbin}, {0, 1, 1}][[All, 1]])}//Thread; 
 
-binSorted = Sort[binData, #1[[2]] > #2[[2]] &];
+    plot = ListPlot[binData, InterpolationOrder -> 0, Joined -> True, PlotRange -> All, Frame -> True, DataRange -> {minx , maxx }]; 
 
-sum=0; 
-n=1; 
-While[ sum < .68, sum += binSorted[[ n, 2]]; n++ ];
-cl1=binSorted[[n,2]];
+    binSorted = Sort[binData, #1[[2]] > #2[[2]] &];
 
-While[ sum < .95 && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
-cl2=binSorted[[n,2]];
+    sum=0; 
+    n=1; 
+    While[ sum < .68, sum += binSorted[[ n, 2]]; n++ ];
+    cl1=binSorted[[n,2]];
 
-confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }]; 
-    confLimits2 = ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }]; 
+    While[ sum < .95 && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
+    cl2=binSorted[[n,2]];
 
+    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> {0, 1.1*Max[ data[[All,2]] ] }, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }, FilterRules[{opt},Options[ListPlot]] ]; 
+        confLimits2 = ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx , maxx }];
 
-Return[Show[plot,confLimits1,confLimits2]]; 
+    Return[Show[plot,confLimits1,confLimits2]]; 
+
 ]; 
 
+
+LogCrediblePlot1D[data_, nbins_, options___] := Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ftlog, logData, plot}, 
+	logData = data; 
+	logData[[All,1]] = Log10[logData[[All,1]]];
+	
+	Return[CrediblePlot1D[logData,nbins]];
+];
 
 LogCrediblePlot1D[data_, nbins_, options___] := 
 Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ftlog, logData, plot}, 
@@ -43,23 +53,22 @@ Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, yda
 	minx = Min[logData[[All,1]]]; 
 	maxx = Max[logData[[All,1]]]; 
 	xbin = (maxx - minx)/nbins; 
-
+(*  
 	binData = Table[Plus @@ Select[logData, i - xbin/2 < #1[[1]] < i + xbin/2 & ][[All,2]], {i, minx - xbin/2, maxx + xbin/2, xbin}]; 
 	ftlog = {{Automatic, Automatic}, {Join[Table[{i, If[maxx-minx>9&&OddQ[i],Null,Superscript[10, i]], {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, 
            {i, 0.1, 0.9, 0.1}]]], Join[Table[{i, Null, {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, {i, 0.1, 0.9, 0.1}]]]}}; 
-    cl = Quiet[p /. {FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.95, {p, 0, 1}], FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.68, {p, 0, 1}]}]; 
+    cl = Quiet[p /. {FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.95, {p, 0, 1}], FindRoot[Plus @@ Plus @@ (#1*UnitStep[#1 - p] & )[binData] == 0.68, {p, 0, 1}]}]; *)
      
-	plot = ListPlot[binData, InterpolationOrder -> 0, Joined -> True, PlotRange -> {0, 1.1 binData//Max}, Frame -> True, FrameTicks -> ftlog, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
+	plot = ListPlot[binData, InterpolationOrder -> 0, Joined -> True, PlotRange -> All, Frame -> True, FrameTicks -> ftlog, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
     confLimits1 = ListPlot[(#1*UnitStep[#1 - cl[[1]]] & )[binData], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
     confLimits2 = ListPlot[(#1*UnitStep[#1 - cl[[2]]] & )[binData], PlotStyle -> Dashed, InterpolationOrder -> 0, PlotRange -> All, Joined -> True, Filling -> Axis, DataRange -> {minx - (3*xbin)/2, maxx + (3*xbin)/2}]; 
 
 Return[Show[plot, confLimits1, confLimits2, options]];
-];
+]; 
 
-CredPlot2D//Clear;
-Options[CredPlot2D] = {CredibleLevel -> {0.6827,0.9545}, Smoothing->False};
-CredPlot2D[data_, nbins_, OptionsPattern[{CredPlot2D,ListContourPlot}]] := 
-Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft}, 
+CrediblePlot2D//Clear;
+CrediblePlot2D[data_, nbins_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, Smoothing->False, ShowDensity->False, ListContourPlot}]] := 
+Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, contourPlot, densityPlot}, 
 minx = Min[data[[All,1]]]; 
 maxx = Max[data[[All,1]]]; 
 miny = Min[data[[All,2]]]; 
@@ -77,12 +86,21 @@ If[OptionValue[Smoothing]==True, binData = (ArrayPad[#1, 1, 0] & )[ImageData[(Ga
 
 cl = ( p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 0, 1}] &) /@ OptionValue[CredibleLevel])//Quiet;
 
+If[ OptionValue[ShowDensity] == True,
+
+contourPlot = ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, 
+      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, FilterRules[{opt},Options[ListContourPlot]] ];
+
+densityPlot = ListDensityPlot[binData, PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, ColorFunction -> (RGBColor[1-#, 1-#, 1] &)];
+
+Return[Show[contourPlot,densityPlot,contourPlot]];,
+
 Return[ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, 
-      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}]];
+      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, FilterRules[{opt}, Options[ListContourPlot]] ]];
 
 ];
-CrediblePlot2D//Clear;
-CrediblePlot2D[data_, nbins_, options___] := CredPlot2D[data, nbins, options];
+
+];
 
 
 LogLogCrediblePlot2D[data_, nbins_, options___] := Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, logData, ftlog, plot}, 
