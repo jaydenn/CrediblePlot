@@ -8,6 +8,18 @@ LogCrediblePlot1D::usage="LogCrediblePlot1D[2xN list of samples {x,prob} , numbe
 CrediblePlot2D::usage="CrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
 LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob}, number of bins]"
 
+LogTicksCP[min_,max_,step_] := Block[{lmin, lmax, t},
+   lmin = Floor[min];
+   lmax = Ceiling[max];
+   t=0;
+   Return[{Join[ Table[{i, If[Mod[++t,step]==0,Superscript[10, i],Null], {0.012, 0}}, {i, lmin, lmax}], 
+             (Flatten[#1, 1] &)[ Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, lmin, lmax, 1}, {i, 0.1, 0.9, 0.1}]]], 
+           Join[Table[{i, Null, {0.012, 0}}, {i, lmin, lmax}], 
+             (Flatten[#1, 1] &)[ Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, lmin, lmax, 1}, {i, 0.1, 0.9, 0.1}]]]
+          }
+         ];
+];
+LogTicksCP[min_, max_] := If[max-min>5,If[max-min>10,LogTicksCP[min,max,3],LogTicksCP[min,max,2]],LogTicksCP[min,max,1]];
 
 CrediblePlot1D//Clear;
 CrediblePlot1D[data_, nbins_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545},Smoothing->False,LoggedData->False,ListPlot}]] := 
@@ -25,8 +37,7 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
     binData = {Table[i+xbin/2, {i, minx, maxx-xbin/2, xbin}], (Plus @@ #[[All, 2]]) & /@ (BinLists[data, {minx,maxx,xbin}, {0, 1, 1}][[All, 1]])}//Thread; 
 	
 	If[OptionValue[LoggedData]==True,
-	    ft = {{Automatic, Automatic}, {Join[Table[{i, Superscript[10, i], {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, {i, 0.1, 0.9, 0.1}]]], 
-       Join[Table[{i, Null, {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, {i, 0.1, 0.9, 0.1}]]]}},
+	    ft = { {Automatic, Automatic}, LogTicksCP[minx,maxx] },
            
         ft = Automatic;
     ];
@@ -70,7 +81,7 @@ Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, yda
 
 CrediblePlot2D//Clear;
 CrediblePlot2D[data_, nbins_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, LoggedData->False, Smoothing->False, ShowDensity->False, ListContourPlot}]] := 
-Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, contourPlot, densityPlot}, 
+Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, contourPlot, densityPlot, dr, pr}, 
 	If[ Abs[Plus@@data[[All,3]]-1] > 10^-3,
 	Return["Error: data not normalized"];
 	];
@@ -83,45 +94,52 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, contourPlot, den
 	xbin = (maxx - minx)/nbins; 
 	ybin = (maxy - miny)/nbins; 
 
-	If[OptionValue[LoggedData]==True,
-	ft = {{Join[Table[{i, Superscript[10, i], {0.012, 0}}, {i, Floor[miny], Ceiling[maxy]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[miny], Ceiling[maxy], 1}, {i, 0.1, 0.9, 0.1}]]], 
-       Join[Table[{i, Null, {0.012, 0}}, {i, Floor[miny], Ceiling[maxy]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[miny], Ceiling[maxy], 1}, {i, 0.1, 0.9, 0.1}]]]}, 
-      {Join[Table[{i, Superscript[10, i], {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, {i, 0.1, 0.9, 0.1}]]], 
-       Join[Table[{i, Null, {0.012, 0}}, {i, Floor[minx], Ceiling[maxx]}], (Flatten[#1, 1] & )[Table[{Log10[i*10^j], Null, {0.006, 0}}, {j, Floor[minx], Ceiling[maxx], 1}, {i, 0.1, 0.9, 0.1}]]]}},
-       
+	binData = ((BinLists[ data, {minx, maxx, xbin}, {miny, maxy, ybin}, {0, 1, 1}][[All, All, 1]] // Apply[Plus, #, {2}] & ) /. 0 -> {0, 0, 0})[[All, All, 3]]//Transpose;	
+
+	If[OptionValue[Smoothing]==True, 
+	    binData = (ArrayPad[#1, 1, 0] & )[ImageData[(GaussianFilter[#1, {1, 1}] & )[Image[binData]]]];
+	    dr = {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}};
+	    ,
+        dr = {{minx, maxx}, {miny, maxy}};
+	  ];
+    
+    If[OptionValue[LoggedData]==True,
+	   ft = { LogTicksCP[miny,maxy], LogTicksCP[minx,maxx] };
+	   ,
 	ft = Automatic; 
 	];
-	binData=(((Plus @@ # &) /@ #)[[All, 3]] &) /@ (Flatten[#, 1] & /@ BinLists[data, {minx, maxx, xbin}, {miny, maxy, ybin}, {0, 1, 1}]);
-
-	If[OptionValue[Smoothing]==True, binData = (ArrayPad[#1, 1, 0] & )[ImageData[(GaussianFilter[#1, {1, 1}] & )[Image[binData]]]];];
-
+	
 	cl = ( p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 0, 1}] &) /@ OptionValue[CredibleLevel])//Quiet;
-
+    pr = {{minx,maxx},{miny,maxy},All};
+    
 	If[ OptionValue[ShowDensity] == True,
 
-	contourPlot = ListContourPlot[binData, ClippingStyle -> Black, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, 
-      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, ImageSize->Medium, FrameStyle->Large, FrameTicks->ft, FilterRules[{opt}, Options[ListContourPlot]] ];
+	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange -> pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, ImageSize->Medium, FrameStyle->Large, FrameTicks->ft, FilterRules[{opt}, Options[ListContourPlot]]];
 
-	densityPlot = ListDensityPlot[binData, PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, ColorFunction -> (Opacity[.8,RGBColor[1-#, 1-#, 1]] &)];
+	densityPlot = ListDensityPlot[binData, PlotRange -> pr, DataRange -> dr, ColorFunction -> (Opacity[.8,RGBColor[1-#, 1-#, 1]] &)];
 
 	Return[Show[contourPlot,densityPlot,contourPlot]];,
 
-	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, 
-      PlotRange -> All, DataRange -> {{minx - (3*xbin)/2, maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}}, FrameStyle->Large, FrameTicks->ft, FilterRules[{opt}, Options[ListContourPlot]] ]];
+	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange -> pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameStyle->Large, FrameTicks->ft, FilterRules[{opt}, Options[ListContourPlot]]] ];
 	];
 
 ];
 
 
 LogLogCrediblePlot2D//Clear;
-LogLogCrediblePlot2D[data_, nbins_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, Smoothing->False, ShowDensity->False, ListContourPlot}]] := Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, logData, ftlog, plot}, 
+LogLogCrediblePlot2D[data_, nbins_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, Smoothing->False, ShowDensity->False, ListContourPlot}]] := Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, logData, ftlog, plot, logRange}, 
 
 If[Dimensions[data][[2]]!=3,Return["List data does not have suitable dimensions"];];
 
 logData = data; 
 logData[[All,{1, 2}]] = Log10[logData[[All,{1, 2}]]]; 
- 
-Return[CrediblePlot2D[ logData, nbins, CredibleLevel -> OptionValue[CredibleLevel], LoggedData->True, Smoothing->OptionValue[Smoothing], ShowDensity->OptionValue[ShowDensity], FilterRules[{opt}, Options[ListPlot]]]];
+
+logRange={All,Automatic};
+If[FilterRules[{opt}, PlotRange] != {}, 
+ logRange = (FilterRules[{opt}, PlotRange])[[1, 2]] // Log10;
+ ];
+
+Return[CrediblePlot2D[ logData, nbins, CredibleLevel -> OptionValue[CredibleLevel], LoggedData->True, Smoothing->OptionValue[Smoothing], ShowDensity->OptionValue[ShowDensity], PlotRange->logRange, FilterRules[{opt}, Options[ListContourPlot]]]];
 ];
 
 
