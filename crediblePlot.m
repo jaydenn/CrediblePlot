@@ -3,15 +3,14 @@
 BeginPackage["crediblePlot`"]
 
 
-CrediblePlot1D::usage="CrediblePlot1D[2xN list of samples: {x,prob} , number of bins, options]"
+CrediblePlot1D::usage="CrediblePlot1D[2xN list of samples: {x,prob} , number of bins]"
 LogCrediblePlot1D::usage="LogCrediblePlot1D[2xN list of samples {x,prob} , number of bins]"
 CrediblePlot2D::usage="CrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
-LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
+LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob}, number of bins]"
 
 
 CrediblePlot1D//Clear;
 CrediblePlot1D[data_, nbins_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545},Smoothing->False,LoggedData->False,ListPlot}]] := 
-
 Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimits1, confLimits2,ft},
 	
 	If[ Abs[Plus@@data[[All,2]]-1] > 10^-3,
@@ -58,7 +57,8 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 
 
 LogCrediblePlot1D//Clear;
-LogCrediblePlot1D[data_, nbins_, opt:OptionsPattern[CrediblePlot1D]] := Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ftlog, logData, plot}, 
+LogCrediblePlot1D[data_, nbins_, opt:OptionsPattern[CrediblePlot1D]] := 
+Module[{confLimits1, confLimits2, cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, ftlog, logData, plot}, 
 	If[Dimensions[data][[2]]!=2,Return["List data does not have suitable dimensions"];];
 	
 	logData = data; 
