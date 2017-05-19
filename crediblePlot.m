@@ -105,7 +105,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, ftX, ftY, contou
 	  ];
     
     pr=FilterRules[{opt}, PlotRange];   
-    Print[pr];
+
     If[pr == {},
         pr = {{minx,maxx},{miny,maxy},Full};
         ,
@@ -124,7 +124,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, binData, ft, ftX, ftY, contou
         ];
         
       ];
-    Print[pr];
+
     If[OptionValue[LoggedData][[1]]==True,
 	   ftX = LogTicksCP[minx,maxx];
 	   ,
@@ -172,7 +172,6 @@ If[ logRange != {},
       logRange = {};
 
  ];
-Print[logRange];
 
 Return[CrediblePlot2D[ logData, nbins, CredibleLevel -> OptionValue[CredibleLevel], LoggedData->{True,True}, Smoothing->OptionValue[Smoothing], ShowDensity->OptionValue[ShowDensity], PlotRange->logRange, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 ];
@@ -189,7 +188,6 @@ logRange=FilterRules[{opt}, PlotRange];
 If[ logRange != {}, 
    If[Length[logRange[[1,2]]]==3,
       logRange = Join[logRange[[1,2,{1}]]//Log10, logRange[[1,2,{2,3}]] ];
-      Print[logRange];
       ,
       If[(Length[logRange[[1,2]]]==2) && (Depth[logRange[[1,2]]]>2),
       logRange = Join[logRange[[1,2,{1}]]//Log10,logRange[[1,2,{2}]]];
@@ -200,7 +198,6 @@ If[ logRange != {},
    ,
      logRange = {};
 ];
-Print[logRange];
 
 Return[CrediblePlot2D[ logData, nbins, CredibleLevel -> OptionValue[CredibleLevel], LoggedData->{True,False}, Smoothing->OptionValue[Smoothing], ShowDensity->OptionValue[ShowDensity], PlotRange->logRange, FilterRules[FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 ];
@@ -218,7 +215,6 @@ logRange=FilterRules[{opt}, PlotRange];
 If[ logRange != {}, 
    If[Length[logRange[[1,2]]]==3,
       logRange = Join[logRange[[1,2,{1}]], logRange[[1,2,{2}]]//Log10, logRange[[1,2,{3}]] ];
-      Print[logRange];
       ,
       If[(Length[logRange[[1,2]]]==2) && (Depth[logRange[[1,2]]]>2),
       logRange = Join[logRange[[1,2,{1}]],logRange[[1,2,{2}]]//Log10];
@@ -232,6 +228,6 @@ If[ logRange != {},
 Return[CrediblePlot2D[ logData, nbins, CredibleLevel -> OptionValue[CredibleLevel], LoggedData->{False,True}, Smoothing->OptionValue[Smoothing], ShowDensity->OptionValue[ShowDensity], PlotRange->logRange, FilterRules[FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 ];
 
-Print["Welcome to crediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D and LogLogCrediblePlot2D. See the github page or readme for more details."];
+Print["Welcome to crediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D, LogLogCrediblePlot2D, LogLinearCrediblePlot2D and LinearLogCrediblePlot2D. See the github page or readme for more details."];
 
 EndPackage[]
