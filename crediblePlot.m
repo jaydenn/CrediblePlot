@@ -24,7 +24,7 @@ LogTicksCP[min_,max_,step_] := Block[{lmin, lmax, t},
 LogTicksCP[min_, max_] := If[max-min>5,If[max-min>10,LogTicksCP[min,max,3],LogTicksCP[min,max,2]],LogTicksCP[min,max,1]];
 
 CrediblePlot1D//Clear;
-CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->False, ListPlot}]] := 
+CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->{}, ListPlot}]] := 
 
 Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimits1, confLimits2, ft, pr, maxPoint, maxPointLine},
 	
@@ -106,11 +106,13 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 
     pr=FilterRules[{opt}, PlotRange];   
 
-    If[ Element[OptionValue[SimPoint],Reals],
-        simPoint = Log10[OptionValue[SimPoint]];
-        ,
-        Print["Sim point must be a real number"];
-     ];
+    If[ OptionValue[SimPoint] != False,
+        If[ Element[OptionValue[SimPoint],Reals],
+            simPoint = Log10[OptionValue[SimPoint]];
+            ,
+            Print["Sim point must be a real number"];
+         ];
+      ];
     
     If[pr != {},
         If[ Depth[pr[[2,1]]]==2,
@@ -126,7 +128,7 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 
 
 CrediblePlot2D//Clear;
-CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, Smoothing->False, MaxPoint->False, SimPoint->False, ShowDensity->False, ListContourPlot}]] := 
+CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, ListContourPlot}]] := 
 Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross}, 
 	If[ Abs[Plus@@data[[All,3]]-1] > 10^-3,
 	Return["Error: data not normalized"];
@@ -219,7 +221,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 
 
 LogLogCrediblePlot2D//Clear;
-LogLogCrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, Smoothing->False, MaxPoint->False, SimPoint->False, ShowDensity->False, ListContourPlot}]] := 
+LogLogCrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, ListContourPlot}]] := 
 Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, ydata, binData, logData, ftlog, plot, logRange, simPoint}, 
 
 If[Dimensions[data][[2]]!=3,Return["List data does not have suitable dimensions"];];
@@ -317,8 +319,8 @@ Return[CrediblePlot2D[ logData, NumBins->OptionValue[NumBins], CredibleLevel -> 
 ];
 
 CornerPlot//Clear;
-CornerPlot[dataCP_, parList_, opt:OptionsPattern[{ParameterScale -> Linear, NumBins -> 50, CredibleLevel -> {0.6827,0.9545}, Smoothing->False, ShowDensity->False, SimPoint->False, MaxPoint->False, ListContourPlot}]] := 
-  Module[{plotFuncs1D, plotFuncs2D, grid, scale},
+CornerPlot[dataCP_, parList_, opt:OptionsPattern[{ParameterScale -> Linear, NumBins -> 50, CredibleLevel -> {0.6827,0.9545}, Smoothing->False, ShowDensity->False, SimPoint->0, MaxPoint->False, ListContourPlot}]] := 
+  Module[{plotFuncs1D, plotFuncs2D, grid, scale, simScale},
     plotFuncs1D = {CrediblePlot1D, LogCrediblePlot1D};
     plotFuncs2D = {{CrediblePlot2D, LinearLogCrediblePlot2D}, {LogLinearCrediblePlot2D, LogLogCrediblePlot2D}};
     
@@ -353,17 +355,25 @@ CornerPlot[dataCP_, parList_, opt:OptionsPattern[{ParameterScale -> Linear, NumB
         ,
         bins = Table[OptionValue[NumBins],Length[parList]];
       ];
-       
+
+   simPoint=OptionValue[SimPoint];
+   If[ simPoint == 0,
+        simPoint=Table[{},{i,1,Length[parList]}];
+     ]; 
+   If[ Length[simPoint] != Length[parList],
+        Return["Length of SimPoint does not match parameter list length"];
+     ];
+
    grid = Table[
      If[i <= j,
       If[i == j,
        plotFuncs1D[[scale[[i]]]] @@ {dataCP[[1 ;; All, {2 + i, 1}]], 
-        NumBins -> bins[[i]], FrameLabel -> {parList[[i]], "\[ScriptP]"}, MaxPoint->OptionValue[MaxPoint], SimPoint->OptionValue[SimPoint][[i]], CredibleLevel -> OptionValue[CredibleLevel], FilterRules[{opt}, Options[ListContourPlot]] 
+        NumBins -> bins[[i]], FrameLabel -> {parList[[i]], "\[ScriptP]"}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> OptionValue[CredibleLevel], FilterRules[{opt}, Options[ListContourPlot]] 
          },
        plotFuncs2D[[scale[[i]], 
           scale[[j]]]] @@ {dataCP[[1 ;; All, {2 + i, 2 + j, 1}]], 
          NumBins->bins[[{i,j}]], Smoothing -> True, 
-         FrameLabel -> {parList[[i]], parList[[j]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->OptionValue[SimPoint][[{i,j}]], CredibleLevel -> OptionValue[CredibleLevel], FilterRules[{opt}, Options[ListContourPlot]]}
+         FrameLabel -> {parList[[i]], parList[[j]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[{i,j}]], CredibleLevel -> OptionValue[CredibleLevel], FilterRules[{opt}, Options[ListContourPlot]]}
        ], ""]
      , {i, 1, parList // Length}, {j, 1, parList // Length}];
    Return[GraphicsGrid[grid // Transpose, Spacings -> 0]];
