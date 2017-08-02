@@ -9,6 +9,7 @@ CrediblePlot2D::usage="CrediblePlot2D[{{x1,y1,prob1},...} , options]"
 LogLogCrediblePlot2D::usage="LogLogCrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
 LogLinearCrediblePlot2D::usage="LogLinearCrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
 LinearLogCrediblePlot2D::usage="LinearLogCrediblePlot2D[3xN list of samples {x,y,prob} , number of bins]"
+CornerPlot::usage="CornerPlot[ {list of MultiNest data}, {par1,par2,...}, options]"
 
 LogTicksCP[min_,max_,step_] := Block[{lmin, lmax, t},
    lmin = Floor[min];
