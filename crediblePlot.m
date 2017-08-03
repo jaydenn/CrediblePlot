@@ -25,7 +25,7 @@ LogTicksCP[min_,max_,step_] := Block[{lmin, lmax, t},
 LogTicksCP[min_, max_] := If[max-min>5,If[max-min>10,LogTicksCP[min,max,3],LogTicksCP[min,max,2]],LogTicksCP[min,max,1]];
 
 CrediblePlot1D//Clear;
-CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->{}, ListPlot}]] := 
+CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->False, ListPlot}]] := 
 
 Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimits1, confLimits2, ft, pr, maxPoint, maxPointLine},
 	
@@ -86,6 +86,8 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	
 	If[Element[OptionValue[SimPoint],Reals],
 	  maxPointLine = Append[maxPointLine,{Directive[Red,Dashed], Line[{{OptionValue[SimPoint], -.1}, {OptionValue[SimPoint], 1}}]}];
+	  ,
+	  maxPointLine
 	];
 
     plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameStyle->Large, FrameTicks->ft, DataRange -> {minx , maxx}, AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
@@ -359,7 +361,7 @@ CornerPlot[dataCP_, parList_, opt:OptionsPattern[{ParameterScale -> Linear, NumB
 
    simPoint=OptionValue[SimPoint];
    If[ simPoint == 0,
-        simPoint=Table[{},{i,1,Length[parList]}];
+        simPoint=Table[False,{i,1,Length[parList]}];
      ]; 
    If[ Length[simPoint] != Length[parList],
         Return["Length of SimPoint does not match parameter list length"];
