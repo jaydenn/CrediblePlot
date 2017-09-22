@@ -90,9 +90,9 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	  maxPointLine
 	];
 
-    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameStyle->Large, FrameTicks->ft, DataRange -> {minx , maxx}, AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
-    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}]; 
-    confLimits2 = ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, Blue], DataRange -> {minx , maxx}];
+    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameTicks->ft, DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18], AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
+    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18]]; 
+    confLimits2 = ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18] ];
 
     Return[Show[plot,confLimits1,confLimits2]]; 
 
@@ -211,13 +211,13 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 
 	If[ OptionValue[ShowDensity] == True,
 
-	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange->pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, Epilog->maxPointCross, ImageSize->Medium, FrameStyle->Large, FrameTicks->ft, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ];
+	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange->pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, Epilog->maxPointCross, ImageSize->Medium, FrameTicks->ft, FrameStyle->Directive[Black,18], FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ];
 
 	densityPlot = ListDensityPlot[binData, PlotRange->pr, DataRange -> dr, ColorFunction -> (Opacity[.8,RGBColor[1-#, 1-#, 1]] &)];
 
 	Return[Show[contourPlot,densityPlot,contourPlot]];,
 
-	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameStyle->Large, FrameTicks->ft, Epilog->maxPointCross, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
+	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameTicks->ft, FrameStyle->Directive[Black,18], Epilog->maxPointCross, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 	];
 
 ];
@@ -353,10 +353,10 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	
 	pr=FilterRules[{opt}, PlotRange];   
     If[pr == {},
-        pr = {{minx,maxx},{0,Max[{3,binData[[All,2]]}]}};
+        pr = { {minx,maxx}, {0, Min[{ 20, Max[{3,binData[[All,2]]}] }] } };
       ,
       If[pr[[1,2]]=={},
-       pr = {{minx,maxx},{0,Max[{3,binData[[All,2]]}]}};
+       pr = { {minx,maxx}, {0, Min[{ 20, Max[{3,binData[[All,2]]}] }] } };
       ,
        pr = pr[[1,2]];
       ];
@@ -364,22 +364,19 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 
     If[OptionValue[MaxPoint]==True,
     maxPoint = Plus @@ Apply[Times, data, 3];
-	maxPointLine = {Directive[Blue,Dashed], Line[{{maxPoint, -.1}, {maxPoint, 1}}]},
+	maxPointLine = {Directive[Blue,Dashed], Line[{{maxPoint, -.1}, {maxPoint, Max[data[[All,2]]]}}]},
 	maxPointLine = {{}};
 	];
 	
 	If[Element[OptionValue[SimPoint],Reals],
-	  maxPointLine = Append[maxPointLine,{Directive[Red,Dashed], Line[{{OptionValue[SimPoint], -.1}, {OptionValue[SimPoint], 1}}]}];
+	  maxPointLine = Append[maxPointLine,{Directive[Red,Dashed], Line[{{OptionValue[SimPoint], -.1}, {OptionValue[SimPoint], Max[data[[All,2]]]}}]}];
 	  ,
 	  maxPointLine
 	];
 
-    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameStyle->Large, FrameTicks->ft, DataRange -> {minx , maxx}, AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
+    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameStyle->Directive[Black,18], FrameTicks->ft, DataRange -> {minx , maxx}, AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
 
-    confLimits1 = ListPlot[binData[[All,2]], PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}]; 
-    confLimits2 = ListPlot[binData[[All,2]], PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, Blue], DataRange -> {minx , maxx}];
-
-    Return[Show[plot,confLimits1,confLimits2]]; 
+    Return[plot]; 
 
 ]; 
 
@@ -410,7 +407,7 @@ LogProfilePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{4}, NumBins->50, Smo
         ];
     ];
     
-	Return[ProfilePlot1D[ logData, NumBins->OptionValue[NumBins], CredibleLevel -> OptionValue[CredibleLevel], SimPoint->simPoint, MaxPoint->OptionValue[MaxPoint], PlotRange->pr, LoggedData->True, Smoothing->OptionValue[Smoothing], FilterRules[FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ] ];
+	Return[ProfilePlot1D[ logData, NumBins->OptionValue[NumBins], CredibleLevel -> OptionValue[CredibleLevel], SimPoint->simPoint, MaxPoint->OptionValue[MaxPoint], PlotRange->pr, LoggedData->True, Smoothing->OptionValue[Smoothing], FrameStyle->Directive[Black,18], FilterRules[FilterRules[{opt}, Options[ListPlot]], Except[PlotRange]] ] ];
 
 ];
 
@@ -491,17 +488,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 	maxPointCross = Append[ maxPointCross, {{ Inset[Style["\[Cross]", 30, Red], OptionValue[SimPoint], {Center, -.1}] }} ];
 	];
 
-	If[ OptionValue[ShowDensity] == True,
-
-	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange->pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, Epilog->maxPointCross, ImageSize->Medium, FrameStyle->Large, FrameTicks->ft, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ];
-
-
-	densityPlot = ListDensityPlot[binData, PlotRange->pr, DataRange -> dr, ColorFunction -> (Opacity[.8,RGBColor[1-#, 1-#, 1]] &)];
-
-	Return[Show[contourPlot,densityPlot,contourPlot]];,
-
-	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> OptionValue[CredibleLevel], PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameStyle->Large, FrameTicks->ft, Epilog->maxPointCross, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
-	];
+	Return[ListContourPlot[binData, ClippingStyle -> None, Contours -> OptionValue[CredibleLevel], PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameStyle->Directive[Black,18], FrameTicks->ft, Epilog->maxPointCross, ImageSize->Medium, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 
 ];
 
@@ -600,7 +587,7 @@ CornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible",Parameter
      If[i <= j,
       If[i == j,
        plotFuncs1D[[scale[[i]]]] @@ {dataCP[[1 ;; All, {2 + i, col}]], 
-        NumBins -> bins[[i]], FrameLabel -> {parList[[i]], {"\[ScriptP]","\[CapitalDelta]Superscript[\[Chi],2]"}[[col]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]] 
+        NumBins -> bins[[i]], FrameLabel -> {parList[[i]], {"\[ScriptP]",Superscript["\[CapitalDelta]\[Chi]",2]}[[col]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]] 
          },
        plotFuncs2D[[scale[[i]], 
           scale[[j]]]] @@ {dataCP[[1 ;; All, {2 + i, 2 + j, col}]], 
