@@ -33,7 +33,8 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	Return["Error: data not normalized, sum = "<>ToString[Plus@@data[[All,2]]]];
 	];
 	If[Dimensions[data][[2]]!=2,Return["List data does not have suitable dimensions"];];
-	
+	If[Length[ OptionValue[CredibleLevel] ] > 2, Return["More than 2 credible levels not currently supported"];];
+	 
     If[ Depth[OptionValue[NumBins]] > 1,
         Print[OptionValue[NumBins]];
         Return["Invalid binSpec"];
@@ -75,7 +76,7 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
     While[ sum < OptionValue[CredibleLevel][[1]] && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
     cl1=binSorted[[n,2]];
 
-    If[ Length[ OptionValue[CredibleLevel] ] > 1 ,
+    If[ Length[ OptionValue[CredibleLevel] ] == 2 ,
         While[ sum < OptionValue[CredibleLevel][[2]] && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
         cl2=binSorted[[n,2]];
     ];
@@ -93,8 +94,8 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	];
 
     plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameTicks->ft, DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18], AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
-    confLimits = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18]]; 
-    confLimits2 = If[Length[ OptionValue[CredibleLevel] ] > 1 , 
+    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18]]; 
+    confLimits2 = If[Length[ OptionValue[CredibleLevel] ] == 2 , 
         ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18] ], {}];
 
     Return[Show[plot,confLimits1,confLimits2]]; 
