@@ -25,7 +25,7 @@ LogTicksCP[min_,max_,step_] := Block[{lmin, lmax, t},
 LogTicksCP[min_, max_] := If[max-min>5,If[max-min>10,LogTicksCP[min,max,3],LogTicksCP[min,max,2]],LogTicksCP[min,max,1]];
 
 CrediblePlot1D//Clear;
-CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->False, ListPlot}]] := 
+CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBins->50, Smoothing->False, LoggedData->False, MaxPoint->False, SimPoint->False, CredibleColor->Blue, ListPlot}]] := 
 
 Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimits1, confLimits2, ft, pr, maxPoint, maxPointLine},
 	
@@ -93,10 +93,10 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
 	  maxPointLine
 	];
 
-    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, Blue], PlotRange -> pr, Frame -> True, FrameTicks->ft, DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18], AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
-    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18]]; 
+    plot        = ListPlot[  binData[[All,2]], InterpolationOrder -> interpOrder, Joined -> True, PlotStyle -> Opacity[0.5, OptionValue[CredibleColor]], PlotRange -> pr, Frame -> True, FrameTicks->ft, DataRange -> {minx , maxx}, FrameStyle->Directive[Black,20], AspectRatio->1, ImageSize->Medium, Epilog -> maxPointLine, BaseStyle->{FontFamily->"Times"}, FilterRules[ FilterRules[{opt}, Options[ListPlot]],Except[PlotRange]] ]; 
+    confLimits1 = ListPlot[(#1*UnitStep[#1 - cl1] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.3, OptionValue[CredibleColor]], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,20],BaseStyle->{FontFamily->"Times"}]; 
     confLimits2 = If[Length[ OptionValue[CredibleLevel] ] == 2 , 
-        ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, Blue], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,18] ], {}];
+        ListPlot[(#1*UnitStep[#1 - cl2] & )[binData[[All,2]]] /. 0.->-1, PlotStyle -> None, PlotRange -> pr, InterpolationOrder -> interpOrder,  AspectRatio->1, ImageSize->Medium, Joined -> True, Filling -> Bottom, FillingStyle -> Opacity[0.2, OptionValue[CredibleColor]], DataRange -> {minx , maxx}, FrameStyle->Directive[Black,20],BaseStyle->{FontFamily->"Times"} ], {}];
 
     Return[Show[plot,confLimits1,confLimits2]]; 
 
@@ -135,7 +135,7 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 
 
 CrediblePlot2D//Clear;
-CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, ListContourPlot}]] := 
+CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, CredibleColor->Blue, ListContourPlot}]] := 
 Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross}, 
 	If[ Abs[Plus@@data[[All,3]]-1] > 10^-3,
 	Return["Error: data not normalized"];
@@ -218,13 +218,13 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 
 	If[ OptionValue[ShowDensity] == True,
 
-	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange->pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> None, Epilog->maxPointCross, AspectRatio->1, ImageSize->Medium, FrameTicks->ft, FrameStyle->Directive[Black,18], FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ];
+	contourPlot = ListContourPlot[binData, ClippingStyle -> None, PlotRange->pr, Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, ContourStyle -> {{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}}, ContourShading -> None, Epilog->maxPointCross, AspectRatio->1, ImageSize->Medium, FrameTicks->ft, FrameStyle->Directive[Black,20],BaseStyle->{FontFamily->"Times"}, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ];
 
 	densityPlot = ListDensityPlot[binData, PlotRange->pr, DataRange -> dr, ColorFunction -> (Opacity[.8,RGBColor[1-#, 1-#, 1]] &)];
 
 	Return[Show[contourPlot,densityPlot,contourPlot]];,
 
-	Return[ ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{Blue, Dashed, Thick}, {Blue, Thick}}, ContourShading -> {None, Opacity[0.2, Blue], Opacity[0.5, Blue]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, ImageSize->Medium, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
+	Return[ ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}}, ContourShading -> {None, Opacity[0.2, OptionValue[CredibleColor]], Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, ImageSize->Medium, BaseStyle->{FontFamily->"Times"}, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]] ] ];
 	];
 
 ];
@@ -615,8 +615,8 @@ CornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible", Credible
 
 DualCornerPlot//Clear;
 DualCornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible", CredibleLevel -> None, ParameterScale -> Linear, NumBins -> 50, Smoothing->False, ShowDensity->False, SimPoint->0, MaxPoint->False, ListContourPlot}]] := 
-  Module[{plotFuncs1D, plotFuncs2D, grid, scale, simScale, x1, x2, bins1, bins2},
-    
+  Module[{plotFuncs1D, plotFuncs2D, grid, scale, simScale, x1, x2, bins1, bins2,colors},
+    colors={Blue,Red,Darker[Green],Purple};
     If[OptionValue[PlotType]=="Credible",
         plotFuncs1D = {CrediblePlot1D, LogCrediblePlot1D};
         plotFuncs2D = {{CrediblePlot2D, LinearLogCrediblePlot2D}, {LogLinearCrediblePlot2D, LogLogCrediblePlot2D}};
@@ -692,29 +692,23 @@ DualCornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible", Cred
    If[ Length[simPoint] != Length[parList],
         Return["Length of SimPoint does not match parameter list length"];
      ];
-
+   
    grid = Table[
      If[i <= j,
       If[i == j,
         Show[
-          plotFuncs1D[[scale[[i]]]] @@ {dataCP[[2,1 ;; All, {2 + i, col}]], 
-          NumBins -> bins2[[i]], FrameLabel -> {parList[[i]], {"\[ScriptP]",Superscript["\[CapitalDelta]\[Chi]",2]}[[col]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]] 
-           }/.Blue->Red,
-          plotFuncs1D[[scale[[i]]]] @@ {dataCP[[1,1 ;; All, {2 + i, col}]], 
-          NumBins -> bins1[[i]], FrameLabel -> {parList[[i]], {"\[ScriptP]",Superscript["\[CapitalDelta]\[Chi]",2]}[[col]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]] 
-         }]
-       ,
-        Show[ plotFuncs2D[[scale[[i]], 
-          scale[[j]]]] @@ {dataCP[[1,1 ;; All, {2 + i, 2 + j, col}]], 
-         NumBins->bins1[[{i,j}]], Smoothing -> True, 
-         FrameLabel -> {parList[[i]], parList[[j]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[{i,j}]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]]}
-           ,
-           plotFuncs2D[[scale[[i]], 
-          scale[[j]]]] @@ {dataCP[[2,1 ;; All, {2 + i, 2 + j, col}]], 
-         NumBins->bins2[[{i,j}]], Smoothing -> True, 
-         FrameLabel -> {parList[[i]], parList[[j]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[{i,j}]], CredibleLevel -> CL, FilterRules[{opt}, Options[ListContourPlot]]}/.Blue->Red
+          plotFuncs1D[[scale[[i]]]] @@@ Table[{dataCP[[k,1 ;; All, {2 + i, col}]], 
+          NumBins -> bins2[[i]], FrameLabel -> {parList[[i]], {"\[ScriptP]",Superscript["\[CapitalDelta]\[Chi]",2]}[[col]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[i]], CredibleLevel -> CL, CredibleColor->colors[[k]], FilterRules[{opt}, Options[ListContourPlot]] 
+           },{k,1,Length[dataCP]}]
           ]
-       ], ""]
+       ,
+        Show @@ (plotFuncs2D[[scale[[i]], 
+          scale[[j]]]] @@@ Table[ {dataCP[[k, 1 ;; All, {2 + i, 2 + j, col}]], 
+         NumBins->bins1[[{i,j}]], Smoothing -> True, 
+         FrameLabel -> {parList[[i]], parList[[j]]}, MaxPoint->OptionValue[MaxPoint], SimPoint->simPoint[[{i,j}]], CredibleLevel -> CL, CredibleColor->colors[[k]], FilterRules[{opt}, Options[ListContourPlot]]}
+           ,{k,1,Length[dataCP]}])
+       ]
+       , ""]
      , {i, 1, parList // Length}, {j, 1, parList // Length}];
 
    Return[GraphicsGrid[grid // Transpose, Spacings -> 0]];
