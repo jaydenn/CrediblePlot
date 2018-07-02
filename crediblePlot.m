@@ -720,7 +720,19 @@ MedianCP[data_] := Module[{sortDat, p, i},
   While[p < 0.5,
    p += sortDat[[i, 2]]; i += 1;];
   Return[sortDat[[i, 1]]]];
+  
+CredibleInterval[data_, opt:OptionsPattern[{CredibleLevel->0.9}]] := Module[{sortDat, p, i},
+  sortDat = Sort[data, #1[[2]] < #2[[2]] &];
+  p = 0; i = 1;
+  While[p < (1-OptionValue[CredibleLevel]),
+   p += sortDat[[i, 2]]; i += 1;];
+   sortDat=Drop[sortDat,i];
+  Return[{Min[sortDat[[All, 1]]],Max[sortDat[[All, 1]]]}];
+  ];
 
 Print["Welcome to CrediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D, LogLogCrediblePlot2D, LogLinearCrediblePlot2D and LinearLogCrediblePlot2D. See the github page or readme for more details."];
 
-EndPackage[]
+EndPackage[];
+
+
+
