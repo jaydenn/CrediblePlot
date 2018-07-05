@@ -721,13 +721,31 @@ MedianCP[data_] := Module[{sortDat, p, i},
    p += sortDat[[i, 2]]; i += 1;];
   Return[sortDat[[i, 1]]]];
   
-CredibleInterval[data_, opt:OptionsPattern[{CredibleLevel->0.9}]] := Module[{sortDat, p, i},
-  sortDat = Sort[data, #1[[2]] < #2[[2]] &];
-  p = 0; i = 1;
-  While[p < (1-OptionValue[CredibleLevel]),
-   p += sortDat[[i, 2]]; i += 1;];
-   sortDat=Drop[sortDat,i];
-  Return[{Min[sortDat[[All, 1]]],Max[sortDat[[All, 1]]]}];
+CredibleInterval[data_, opt:OptionsPattern[{CredibleLevel->0.9,NumBins->0}]] := Module[{sortDat, p, i, minx, maxx, xbin, binData},
+  
+  If[OptionValue[NumBins] == 0,
+     sortDat = Sort[data, #1[[2]] < #2[[2]] &];
+     p = 0; i = 1;
+     While[p < (1-OptionValue[CredibleLevel]),
+      p += sortDat[[i, 2]]; i += 1;];
+   
+     sortDat=Drop[sortDat,i-1];
+     Return[{Min[sortDat[[All, 1]]],Max[sortDat[[All, 1]]]}];
+     ,
+     minx = Min[data[[All,1]]]; 
+     maxx = Max[data[[All,1]]]; 
+     xbin = (maxx - minx)/OptionValue[NumBins]; 
+
+     sortDat = {Table[i+xbin/2, {i, minx, maxx-xbin/2, xbin}], (Plus @@ #[[All, 2]]) & /@ (BinLists[data, {minx,maxx,xbin}, {0, 1, 1}][[All, 1]])}//Thread//Sort[#, #1[[2]] < #2[[2]] &] &; 
+    
+    p = 0; i = 1;
+    While[p < (1-OptionValue[CredibleLevel]),
+     p += sortDat[[i, 2]]; i += 1;];
+   
+   sortDat=Drop[sortDat,i-1];
+   Return[{Min[sortDat[[All, 1]]]-xbin/2,Max[sortDat[[All, 1]]]+xbin/2}];
+   ];
+	
   ];
 
 Print["Welcome to CrediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D, LogLogCrediblePlot2D, LogLinearCrediblePlot2D and LinearLogCrediblePlot2D. See the github page or readme for more details."];
