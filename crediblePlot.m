@@ -645,7 +645,7 @@ PlotGridCP[l_List, w_, h_, opts : OptionsPattern[]] :=
 DualCornerPlot//Clear;
 DualCornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible", CredibleLevel -> None, ParameterScale -> Linear, NumBins -> 50, Smoothing->False, ShowDensity->False, SimPoint->0, MaxPoint->False, ListContourPlot}]] := 
   Module[{plotFuncs1D, plotFuncs2D, grid, scale, simScale, x1, x2, bins1, bins2,colors,pr},
-    colors={Blue,Red,Darker[Green],Purple};
+    colors={Red,Blue,Darker[Green],Purple};
     If[OptionValue[PlotType]=="Credible",
         plotFuncs1D = {CrediblePlot1D, LogCrediblePlot1D};
         plotFuncs2D = {{CrediblePlot2D, LinearLogCrediblePlot2D}, {LogLinearCrediblePlot2D, LogLogCrediblePlot2D}};
