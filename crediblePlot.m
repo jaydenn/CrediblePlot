@@ -135,10 +135,10 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 
 
 CrediblePlot2D//Clear;
-CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, CredibleColor->Blue, ListContourPlot}]] := 
+CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{\[Infinity],\[Infinity]}, ShowDensity->False, CredibleColor->Blue, ListContourPlot}]] := 
 Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross}, 
 	If[ Abs[Plus@@data[[All,3]]-1] > 2*10^-3,
-	Return["Error: data not normalized"];
+	Return["Error: data not normalized p="<>ToString[Plus@@data[[All,3]]]];
 	];
 	If[Dimensions[data][[2]]!=3,Return["List data does not have suitable dimensions"];];
 	
@@ -224,7 +224,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 
 	Return[Show[contourPlot,densityPlot,contourPlot]];,
 
-	Return[ ListContourPlot[binData, ClippingStyle -> None, Contours -> cl, PlotRange->pr, DataRange -> dr, InterpolationOrder -> 2, ContourStyle -> {{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}}, ContourShading -> {None, Opacity[0.2, OptionValue[CredibleColor]], Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, BaseStyle->{FontFamily->"Times"}, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]],ImageSize->Medium ] ];
+	Return[ ListContourPlot[binData, Contours -> cl, PlotRange->pr, DataRange -> dr, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]], ClippingStype -> None, InterpolationOrder -> 2, ContourStyle -> {{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}}, ContourShading -> {None, Opacity[0.2, OptionValue[CredibleColor]], Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, BaseStyle->{FontFamily->"Times"},ImageSize->Medium ] ];
 	];
 
 ];
