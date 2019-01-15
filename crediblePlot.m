@@ -29,7 +29,7 @@ CrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, NumBin
 
 Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimits1, confLimits2, ft, pr, maxPoint, maxPointLine},
 	
-	If[ Abs[Plus@@data[[All,2]]-1] > 10^-3,
+	If[ Abs[Plus@@data[[All,2]]-1] > 2*10^-3,
 	Return["Error: data not normalized, sum = "<>ToString[Plus@@data[[All,2]]]];
 	];
 	If[Dimensions[data][[2]]!=2,Return["List data does not have suitable dimensions"];];
@@ -74,11 +74,11 @@ Module[{plot, minx, maxx, xbin, binData, sum, n, cl1, cl2, interpOrder, confLimi
     sum=0; 
     n=1; 
     While[ sum < OptionValue[CredibleLevel][[1]] && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
-    cl1=binSorted[[n,2]];
+    cl1=binSorted[[n-1,2]];
 
     If[ Length[ OptionValue[CredibleLevel] ] == 2 ,
         While[ sum < OptionValue[CredibleLevel][[2]] && n<Length[binSorted], sum += binSorted[[ n, 2]]; n++;];
-        cl2=binSorted[[n,2]];
+        cl2=binSorted[[n-1,2]];
     ];
 
     If[OptionValue[MaxPoint]==True,
@@ -137,7 +137,7 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 CrediblePlot2D//Clear;
 CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{}, ShowDensity->False, CredibleColor->Blue, ListContourPlot}]] := 
 Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross}, 
-	If[ Abs[Plus@@data[[All,3]]-1] > 10^-3,
+	If[ Abs[Plus@@data[[All,3]]-1] > 2*10^-3,
 	Return["Error: data not normalized"];
 	];
 	If[Dimensions[data][[2]]!=3,Return["List data does not have suitable dimensions"];];
@@ -747,6 +747,15 @@ DualCornerPlot[dataCP_, parList_, opt:OptionsPattern[{PlotType->"Credible", Cred
      , {i, 1, parList // Length}, {j, 1, parList // Length} ];
 
    Return[GraphicsGrid[grid // Transpose, Spacings -> 0]];
+];
+
+TruncatePDF[dat_,opt:OptionsPattern[CredibleLevel->0.9999]]:=Module[{datSort,m,p},
+datSort=Sort[dat,#1[[1]]>#2[[1]]&];
+m=(datSort//Length);p=1;
+While[p>OptionValue[CredibleLevel],
+p=p-datSort[[m,1]];
+m--];
+Return[datSort[[1;;m]]];
 ];
 
 MedianCP[data_] := Module[{sortDat, p, i},
