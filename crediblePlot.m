@@ -136,7 +136,7 @@ LogCrediblePlot1D[data_, opt:OptionsPattern[{CredibleLevel->{0.6827,0.9545}, Num
 
 CrediblePlot2D//Clear;
 CrediblePlot2D[data_, opt:OptionsPattern[{CredibleLevel -> {0.6827,0.9545}, NumBins->50, LoggedData->{False,False}, FrameTicks->False, Smoothing->False, MaxPoint->False, SimPoint->{\[Infinity],\[Infinity]}, ShowDensity->False, CredibleColor->Blue, ListContourPlot}]] := 
-Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross}, 
+Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, maxPoint, maxPointCross, contSty}, 
 	If[ Abs[Plus@@data[[All,3]]-1] > 2*10^-3,
 	Return["Error: data not normalized p="<>ToString[Plus@@data[[All,3]]]];
 	];
@@ -204,8 +204,13 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 	  ft = {ftY,ftX};
 	];
 
+    If[Legnth[OptionValue[CredibleLevel]]>1,
 	cl = ( p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 0, 1}] &) /@ OptionValue[CredibleLevel])//Quiet;
-    
+    contSty={{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}};
+    ,
+    contSty={OptionValue[CredibleColor], Thick};
+    ];
+
     If[OptionValue[MaxPoint]==True,
     maxPoint = {(Plus @@ Apply[Times, data[[All,{1,3}]], 3]), (Plus @@ Apply[Times, data[[All,{2,3}]], 3])};
 	maxPointCross = {{Inset[Style["\[Cross]", 30], maxPoint, {Center, Center}]}},
@@ -224,7 +229,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 
 	Return[Show[contourPlot,densityPlot,contourPlot]];,
 
-	Return[ ListContourPlot[binData, Contours -> cl, PlotRange->pr, DataRange -> dr, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]], ClippingStype -> None, InterpolationOrder -> 2, ContourStyle -> {{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}}, ContourShading -> {None, Opacity[0.2, OptionValue[CredibleColor]], Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, BaseStyle->{FontFamily->"Times"},ImageSize->Medium ] ];
+	Return[ ListContourPlot[binData, Contours -> cl, PlotRange->pr, DataRange -> dr, FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], Except[PlotRange]], ClippingStyle -> None, InterpolationOrder -> 2, ContourStyle -> contSty, ContourShading -> {None, Opacity[0.2, OptionValue[CredibleColor]], Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks->ft, FrameStyle->Directive[Black,20], Epilog->maxPointCross, AspectRatio->1, BaseStyle->{FontFamily->"Times"},ImageSize->Medium ] ];
 	];
 
 ];
