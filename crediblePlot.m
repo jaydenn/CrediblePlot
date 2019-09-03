@@ -208,6 +208,7 @@ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, binData, ft, 
 	cl = ( p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 0, 1}] &) /@ OptionValue[CredibleLevel])//Quiet;
     contSty={{OptionValue[CredibleColor], Dashed, Thick}, {OptionValue[CredibleColor], Thick}};
     ,
+    cl = p /. (FindRoot[Plus @@ Plus @@ (binData*UnitStep[binData - p]) == OptionValue[CredibleLevel], {p, 0, 1}] ) //Quiet;
     contSty={OptionValue[CredibleColor], Thick};
     ];
 
