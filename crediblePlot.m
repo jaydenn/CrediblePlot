@@ -798,7 +798,124 @@ CredibleInterval[data_, opt:OptionsPattern[{CredibleLevel->0.9,NumBins->0}]] := 
 	
   ];
 
-Print["Welcome to CrediblePlot, the available functions are: CrediblePlot1D, LogCrediblePlot1D, CrediblePlot2D, LogLogCrediblePlot2D, LogLinearCrediblePlot2D and LinearLogCrediblePlot2D. See the github page or readme for more details."];
+CredibleGridPlot2D[binData_, range_, 
+  opt : OptionsPattern[{CredibleLevel -> {0.6827, 0.9545}, 
+     LoggedData -> {False, False}, FrameTicks -> False, 
+     Smoothing -> False, MaxPoint -> False, 
+     SimPoint -> {\[Infinity], \[Infinity]}, ShowDensity -> False, 
+     CredibleColor -> Blue, ListContourPlot}]] := 
+ Module[{cl, p, minx, miny, maxx, maxy, xbin, ybin, xNbins, yNbins, 
+   ft, ftX, ftY, contourPlot, densityPlot, dr, pr, prX, prY, 
+   maxPoint, maxPointCross, contSty}, 
+  	
+  	If[Dimensions[binData] != 2, 
+   Return["List data does not have suitable dimensions"];];
+  	xNbins = Length[binData];
+    yNbins = Length[binData[[1]]];
+  
+  	minx = range[[1, 1]]; 
+  	maxx = range[[1, 2]]; 
+  	miny = range[[2, 1]]; 
+  	maxy = range[[2, 2]]; 
+  	xbin = (maxx - minx)/xNbins; 
+  	ybin = (maxy - miny)/yNbins; 
+  
+  	(*binData = ((BinLists[ data, {minx, maxx, xbin}, {miny, maxy, 
+  ybin}, {0, 1, 1}][[All, All, 1]] // Apply[Plus, #, {2}] & ) /. 
+  0 -> {0, 0, 0})[[All, All, 3]]//Transpose;*)
+  
+  	If[OptionValue[Smoothing] == True, 
+   	    binData = (ArrayPad[#1, 1, 0] & )[
+     ImageData[(GaussianFilter[#1, {2, 2}] & )[Image[binData]]]];
+   	    dr = {{minx - (3*xbin)/2, 
+      maxx + (3*xbin)/2}, {miny - (3*ybin)/2, maxy + (3*ybin)/2}};
+   	    ,
+                 dr = {{minx, maxx}, {miny, maxy}};
+   	  ];
+      
+      pr = FilterRules[{opt}, PlotRange];   
+  
+      If[pr == {},
+           pr = {{minx, maxx}, {miny, maxy}, All};
+           ,
+           If[Length[pr[[1, 2]]] == 0,
+             pr = {{minx, maxx}, {miny, maxy}, All};
+            ];
+           If[Depth[pr[[1, 2]]] == 2,
+             pr = Join[{{minx, maxx}}, {pr[[1, 2]]}, {All}]
+            ];
+           If[Length[pr[[1, 2]]] == 3,
+             pr = pr[[1, 2]];
+            ,
+                If[Length[pr[[1, 2]]] == 2,
+                   pr = Join[pr[[1, 2]], {All}]
+                  ];
+            ];
+           
+         ];
+        
+     ft = OptionValue[FrameTicks];
+     If[ ft == False,
+         If[OptionValue[LoggedData][[1]] == True,
+    	     ftX = LogTicksCP[minx, maxx];
+    	    ,
+    	     ftX = Automatic; 
+    	  ];
+   	  If[OptionValue[LoggedData][[2]] == True,
+    	     ftY = LogTicksCP[miny, maxy];
+    	    ,
+    	     ftY = Automatic; 
+    	  ];
+   	  ft = {ftY, ftX};
+   	];
+  
+      If[Length[OptionValue[CredibleLevel]] > 1,
+   	cl = ( 
+      p /. (FindRoot[
+           Plus @@ Plus @@ (binData*UnitStep[binData - p]) == #, {p, 
+            0, 1}] &) /@ OptionValue[CredibleLevel]) // Quiet;
+       contSty = {{OptionValue[CredibleColor], Dashed, 
+      Thick}, {OptionValue[CredibleColor], Thick}};
+       ,
+       cl = {p /. (FindRoot[
+         Plus @@ Plus @@ (binData*UnitStep[binData - p]) == 
+          OptionValue[CredibleLevel], {p, 0, 1}] ) // Quiet};
+       contSty = {{OptionValue[CredibleColor], Thick}};
+       ];
+  
+  If[ OptionValue[ShowDensity] == True,
+   
+   	contourPlot = 
+    ListContourPlot[binData, ClippingStyle -> None, PlotRange -> pr, 
+     Contours -> cl, DataRange -> dr,  InterpolationOrder -> 2, 
+     ContourStyle -> {{OptionValue[CredibleColor], Dashed, 
+        Thick}, {OptionValue[CredibleColor], Thick}}, 
+     ContourShading -> None, AspectRatio -> 1, FrameTicks -> ft, 
+     FrameStyle -> Directive[Black, 20], 
+     BaseStyle -> {FontFamily -> "Times"}, 
+     FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], 
+      Except[PlotRange]], ImageSize -> Medium ];
+   
+   	densityPlot = 
+    ListDensityPlot[binData, PlotRange -> pr, DataRange -> dr, 
+     ColorFunction -> (Opacity[#, OptionValue[CredibleColor]] &)];
+   
+   	Return[Show[contourPlot, densityPlot, contourPlot]];,
+   
+   	Return[ 
+     ListContourPlot[binData, Contours -> cl, PlotRange -> pr, 
+      DataRange -> dr, 
+      FilterRules[ FilterRules[{opt}, Options[ListContourPlot]], 
+       Except[PlotRange]], ClippingStyle -> None, 
+      InterpolationOrder -> 2, ContourStyle -> contSty, 
+      ContourShading -> {None, 
+        Opacity[0.2, OptionValue[CredibleColor]], 
+        Opacity[0.5, OptionValue[CredibleColor]]}, FrameTicks -> ft, 
+      FrameStyle -> Directive[Black, 20], AspectRatio -> 1, 
+      BaseStyle -> {FontFamily -> "Times"}, ImageSize -> Medium ] ];
+   	];
+  
+];
 
 EndPackage[];
 
